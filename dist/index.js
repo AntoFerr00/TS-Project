@@ -1,22 +1,43 @@
 "use strict";
-/**
- * Advanced Task Manager CLI Application
- *
- * This project demonstrates advanced TypeScript features:
- * - Enums for TaskStatus and TaskPriority.
- * - Interfaces for Task and Repository.
- * - An abstract class with a generic in-memory repository.
- * - A custom method decorator for logging.
- * - A TaskManager class that uses the repository.
- * - Discriminated unions for CLI command processing.
- * - Async/await for simulating async operations.
- */
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -26,6 +47,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+Object.defineProperty(exports, "__esModule", { value: true });
+const readline = __importStar(require("readline"));
 // ---------------------------
 // Decorator: Log Method Calls
 // ---------------------------
@@ -68,7 +91,7 @@ class InMemoryRepository {
         return item;
     }
     update(id, updatedItem) {
-        const index = this.items.findIndex(item => item.id === id);
+        const index = this.items.findIndex((item) => item.id === id);
         if (index === -1)
             return undefined;
         this.items[index] = Object.assign(Object.assign({}, this.items[index]), updatedItem);
@@ -76,11 +99,11 @@ class InMemoryRepository {
     }
     remove(id) {
         const initialLength = this.items.length;
-        this.items = this.items.filter(item => item.id !== id);
+        this.items = this.items.filter((item) => item.id !== id);
         return this.items.length < initialLength;
     }
     getById(id) {
-        return this.items.find(item => item.id === id);
+        return this.items.find((item) => item.id === id);
     }
     getAll() {
         return this.items;
@@ -90,13 +113,11 @@ class InMemoryRepository {
 // Task Repository
 // ---------------------------
 class TaskRepository extends InMemoryRepository {
-    // Additional method to filter tasks by priority
     getByPriority(priority) {
-        return this.items.filter(task => task.priority === priority);
+        return this.items.filter((task) => task.priority === priority);
     }
-    // Additional method to filter tasks due before a specific date
     getDueBefore(date) {
-        return this.items.filter(task => task.dueDate !== undefined && task.dueDate < date);
+        return this.items.filter((task) => task.dueDate !== undefined && task.dueDate < date);
     }
 }
 // ---------------------------
@@ -108,7 +129,7 @@ class TaskManager {
     }
     addTask(title, description, priority, dueDate) {
         const task = {
-            id: 0, // Will be set by repository
+            id: 0, // will be assigned by repository
             title,
             description,
             status: TaskStatus.Pending,
@@ -152,109 +173,198 @@ __decorate([
     logExecution
 ], TaskManager.prototype, "listTasksDueBefore", null);
 // ---------------------------
-// Generic Helper Function
+// Interactive CLI using readline
 // ---------------------------
-function logItems(items) {
-    items.forEach((item) => console.log(item));
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+});
+function askQuestion(query) {
+    return new Promise((resolve) => rl.question(query, resolve));
 }
 // ---------------------------
-// Process Command Asynchronously
+// Interactive Menu Function
 // ---------------------------
-function processCommand(command, manager) {
+function interactiveMenu(manager) {
     return __awaiter(this, void 0, void 0, function* () {
-        switch (command.type) {
-            case "add": {
-                const dueDate = command.dueDate ? new Date(command.dueDate) : undefined;
-                const task = manager.addTask(command.title, command.description, command.priority, dueDate);
-                console.log("Task added:", task);
-                break;
-            }
-            case "update": {
-                const updatedTask = manager.updateTask(command.id, command.updates);
-                if (updatedTask) {
-                    console.log("Task updated:", updatedTask);
+        while (true) {
+            console.log("\n--- Task Manager Menu ---");
+            console.log("1. Add Task");
+            console.log("2. Update Task");
+            console.log("3. Remove Task");
+            console.log("4. List Tasks");
+            console.log("5. Exit");
+            const choice = yield askQuestion("Select an option: ");
+            switch (choice.trim()) {
+                case "1": {
+                    const title = yield askQuestion("Enter task title: ");
+                    const description = yield askQuestion("Enter task description: ");
+                    const priorityStr = yield askQuestion("Enter task priority (Low, Medium, High): ");
+                    let priority;
+                    if (priorityStr.toLowerCase() === "low") {
+                        priority = TaskPriority.Low;
+                    }
+                    else if (priorityStr.toLowerCase() === "high") {
+                        priority = TaskPriority.High;
+                    }
+                    else {
+                        priority = TaskPriority.Medium;
+                    }
+                    const dueDateStr = yield askQuestion("Enter due date (YYYY-MM-DD) or leave blank: ");
+                    let dueDate = undefined;
+                    if (dueDateStr.trim() !== "") {
+                        dueDate = new Date(dueDateStr);
+                        if (isNaN(dueDate.getTime())) {
+                            console.log("Invalid date. Due date not set.");
+                            dueDate = undefined;
+                        }
+                    }
+                    const newTask = manager.addTask(title, description, priority, dueDate);
+                    console.log("Added Task:", newTask);
+                    break;
                 }
-                else {
-                    console.log(`Task with id ${command.id} not found.`);
+                case "2": {
+                    const updateIdStr = yield askQuestion("Enter task ID to update: ");
+                    const updateId = parseInt(updateIdStr);
+                    if (isNaN(updateId)) {
+                        console.log("Invalid task ID.");
+                        break;
+                    }
+                    console.log("What would you like to update?");
+                    console.log("1. Title");
+                    console.log("2. Description");
+                    console.log("3. Status");
+                    console.log("4. Priority");
+                    console.log("5. Due Date");
+                    const updateChoice = yield askQuestion("Select an option: ");
+                    let updates = {};
+                    switch (updateChoice.trim()) {
+                        case "1": {
+                            const newTitle = yield askQuestion("Enter new title: ");
+                            updates.title = newTitle;
+                            break;
+                        }
+                        case "2": {
+                            const newDesc = yield askQuestion("Enter new description: ");
+                            updates.description = newDesc;
+                            break;
+                        }
+                        case "3": {
+                            const newStatusStr = yield askQuestion("Enter new status (Pending, In Progress, Completed): ");
+                            let newStatus;
+                            if (newStatusStr.toLowerCase() === "pending") {
+                                newStatus = TaskStatus.Pending;
+                            }
+                            else if (newStatusStr.toLowerCase() === "in progress" ||
+                                newStatusStr.toLowerCase() === "inprogress") {
+                                newStatus = TaskStatus.InProgress;
+                            }
+                            else if (newStatusStr.toLowerCase() === "completed") {
+                                newStatus = TaskStatus.Completed;
+                            }
+                            else {
+                                console.log("Invalid status. Update aborted.");
+                                break;
+                            }
+                            updates.status = newStatus;
+                            break;
+                        }
+                        case "4": {
+                            const newPriorityStr = yield askQuestion("Enter new priority (Low, Medium, High): ");
+                            let newPriority;
+                            if (newPriorityStr.toLowerCase() === "low") {
+                                newPriority = TaskPriority.Low;
+                            }
+                            else if (newPriorityStr.toLowerCase() === "high") {
+                                newPriority = TaskPriority.High;
+                            }
+                            else if (newPriorityStr.toLowerCase() === "medium") {
+                                newPriority = TaskPriority.Medium;
+                            }
+                            else {
+                                console.log("Invalid priority. Update aborted.");
+                                break;
+                            }
+                            updates.priority = newPriority;
+                            break;
+                        }
+                        case "5": {
+                            const newDueDateStr = yield askQuestion("Enter new due date (YYYY-MM-DD) or leave blank to remove: ");
+                            if (newDueDateStr.trim() === "") {
+                                updates.dueDate = undefined;
+                            }
+                            else {
+                                const newDueDate = new Date(newDueDateStr);
+                                if (isNaN(newDueDate.getTime())) {
+                                    console.log("Invalid date. Update aborted.");
+                                    break;
+                                }
+                                else {
+                                    updates.dueDate = newDueDate;
+                                }
+                            }
+                            break;
+                        }
+                        default:
+                            console.log("Invalid update option.");
+                    }
+                    const updatedTask = manager.updateTask(updateId, updates);
+                    if (updatedTask) {
+                        console.log("Updated Task:", updatedTask);
+                    }
+                    else {
+                        console.log(`Task with ID ${updateId} not found.`);
+                    }
+                    break;
                 }
-                break;
-            }
-            case "remove": {
-                const removed = manager.removeTask(command.id);
-                console.log(removed ? `Task ${command.id} removed.` : `Task ${command.id} not found.`);
-                break;
-            }
-            case "list": {
-                // Simulate async delay
-                yield new Promise(resolve => setTimeout(resolve, 300));
-                const tasks = manager.listTasks();
-                console.log("Listing all tasks:");
-                logItems(tasks);
-                break;
-            }
-            case "listPriority": {
-                yield new Promise(resolve => setTimeout(resolve, 300));
-                const tasks = manager.listTasksByPriority(command.priority);
-                console.log(`Listing tasks with priority "${command.priority}":`);
-                logItems(tasks);
-                break;
-            }
-            case "listDueBefore": {
-                yield new Promise(resolve => setTimeout(resolve, 300));
-                const date = new Date(command.date);
-                const tasks = manager.listTasksDueBefore(date);
-                console.log(`Listing tasks due before ${date.toLocaleString()}:`);
-                logItems(tasks);
-                break;
-            }
-            default: {
-                const _exhaustiveCheck = command;
-                throw new Error(`Unhandled command: ${_exhaustiveCheck}`);
+                case "3": {
+                    const removeIdStr = yield askQuestion("Enter task ID to remove: ");
+                    const removeId = parseInt(removeIdStr);
+                    if (isNaN(removeId)) {
+                        console.log("Invalid task ID.");
+                        break;
+                    }
+                    const removed = manager.removeTask(removeId);
+                    if (removed) {
+                        console.log(`Task with ID ${removeId} removed.`);
+                    }
+                    else {
+                        console.log(`Task with ID ${removeId} not found.`);
+                    }
+                    break;
+                }
+                case "4": {
+                    console.log("\n--- Current Tasks ---");
+                    const tasks = manager.listTasks();
+                    if (tasks.length === 0) {
+                        console.log("No tasks available.");
+                    }
+                    else {
+                        tasks.forEach((task) => {
+                            console.log(`ID: ${task.id} | Title: ${task.title} | Status: ${task.status} | Priority: ${task.priority} | Due: ${task.dueDate ? task.dueDate.toLocaleDateString() : "N/A"}`);
+                        });
+                    }
+                    break;
+                }
+                case "5": {
+                    console.log("Exiting Task Manager.");
+                    rl.close();
+                    return;
+                }
+                default:
+                    console.log("Invalid option. Please try again.");
             }
         }
     });
 }
 // ---------------------------
-// Main Function to Simulate CLI Commands
+// Main Function
 // ---------------------------
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
         const manager = new TaskManager();
-        const commands = [
-            {
-                type: "add",
-                title: "Buy groceries",
-                description: "Milk, Bread, Eggs",
-                priority: TaskPriority.Medium,
-                dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(), // Tomorrow
-            },
-            {
-                type: "add",
-                title: "Complete TypeScript project",
-                description: "Implement advanced features",
-                priority: TaskPriority.High,
-                dueDate: new Date(Date.now() + 1000 * 60 * 60 * 48).toISOString(), // Day after tomorrow
-            },
-            {
-                type: "update",
-                id: 2,
-                updates: { status: TaskStatus.InProgress },
-            },
-            { type: "list" },
-            { type: "listPriority", priority: TaskPriority.High },
-            {
-                type: "listDueBefore",
-                date: new Date(Date.now() + 1000 * 60 * 60 * 36).toISOString(), // 36 hours from now
-            },
-            {
-                type: "remove",
-                id: 1,
-            },
-            { type: "list" },
-        ];
-        for (const cmd of commands) {
-            yield processCommand(cmd, manager);
-        }
+        console.log("Welcome to the Advanced Task Manager CLI!");
+        yield interactiveMenu(manager);
     });
 }
-main().catch(err => console.error("Error in main:", err));
+main().catch((err) => console.error("Error in main:", err));
