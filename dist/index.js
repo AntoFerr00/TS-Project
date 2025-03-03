@@ -1,10 +1,54 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const readline = __importStar(require("readline"));
 // ---------------------------
 // Decorator: Log Method Calls
 // ---------------------------
@@ -85,7 +129,7 @@ class TaskManager {
     }
     addTask(title, description, priority, dueDate) {
         const task = {
-            id: 0,
+            id: 0, // Will be overridden in repository.add
             title,
             description,
             status: TaskStatus.Pending,
@@ -117,78 +161,150 @@ __decorate([
     logExecution
 ], TaskManager.prototype, "listTasks", null);
 // ---------------------------
-// DOM Interaction
+// Command Line Interface Setup
 // ---------------------------
-document.addEventListener("DOMContentLoaded", () => {
-    const manager = new TaskManager();
-    const taskForm = document.getElementById("taskForm");
-    const tasksList = document.getElementById("tasksList");
-    // Renders the current tasks in the DOM using Bootstrap list groups
-    function renderTasks() {
-        tasksList.innerHTML = "";
-        const tasks = manager.listTasks();
-        tasks.forEach((task) => {
-            // Create list group item
-            const li = document.createElement("li");
-            li.classList.add("list-group-item", "d-flex", "justify-content-between", "align-items-start", "mb-2");
-            // Left side: Task info
-            const infoDiv = document.createElement("div");
-            infoDiv.innerHTML = `
-          <div class="fw-bold">${task.title}</div>
-          <small>${task.description || "No description"}</small><br />
-          <small>Status: ${task.status} | Priority: ${task.priority} | Due: ${task.dueDate ? new Date(task.dueDate).toLocaleDateString() : "N/A"}</small>
-        `;
-            // Right side: Action buttons
-            const btnGroup = document.createElement("div");
-            btnGroup.classList.add("btn-group");
-            // Update button (example: only updates the title)
-            const updateBtn = document.createElement("button");
-            updateBtn.classList.add("btn", "btn-warning", "btn-sm");
-            updateBtn.textContent = "Update";
-            updateBtn.addEventListener("click", () => {
-                const newTitle = prompt("Enter new title:", task.title);
-                if (newTitle !== null && newTitle.trim() !== "") {
-                    manager.updateTask(task.id, { title: newTitle });
-                    renderTasks();
-                }
-            });
-            // Remove button
-            const removeBtn = document.createElement("button");
-            removeBtn.classList.add("btn", "btn-danger", "btn-sm");
-            removeBtn.textContent = "Remove";
-            removeBtn.addEventListener("click", () => {
-                if (confirm(`Are you sure you want to remove task ${task.id}?`)) {
-                    manager.removeTask(task.id);
-                    renderTasks();
-                }
-            });
-            btnGroup.appendChild(updateBtn);
-            btnGroup.appendChild(removeBtn);
-            // Combine everything
-            li.appendChild(infoDiv);
-            li.appendChild(btnGroup);
-            tasksList.appendChild(li);
-        });
-    }
-    // Handle form submission to add a new task
-    taskForm.addEventListener("submit", (e) => {
-        e.preventDefault();
-        const titleInput = document.getElementById("title");
-        const descriptionInput = document.getElementById("description");
-        const prioritySelect = document.getElementById("priority");
-        const dueDateInput = document.getElementById("dueDate");
-        const title = titleInput.value.trim();
-        const description = descriptionInput.value.trim();
-        const priority = prioritySelect.value;
-        const dueDate = dueDateInput.value ? new Date(dueDateInput.value) : undefined;
-        if (!title) {
-            alert("Title is required.");
-            return;
-        }
-        manager.addTask(title, description, priority, dueDate);
-        taskForm.reset();
-        renderTasks();
-    });
-    // Initial render
-    renderTasks();
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
 });
+function question(query) {
+    return new Promise((resolve) => rl.question(query, resolve));
+}
+// ---------------------------
+// Main CLI Application Loop
+// ---------------------------
+function main() {
+    return __awaiter(this, void 0, void 0, function* () {
+        const manager = new TaskManager();
+        let exit = false;
+        while (!exit) {
+            console.log("\nTask Manager Menu:");
+            console.log("1. Add Task");
+            console.log("2. Update Task");
+            console.log("3. Remove Task");
+            console.log("4. List Tasks");
+            console.log("5. Exit");
+            const choice = yield question("Choose an option: ");
+            switch (choice.trim()) {
+                case "1": {
+                    const title = yield question("Enter task title: ");
+                    if (title.trim() === "") {
+                        console.log("Title is required.");
+                        break;
+                    }
+                    const description = yield question("Enter task description: ");
+                    const priorityInput = yield question("Enter task priority (Low, Medium, High): ");
+                    let priority;
+                    if (priorityInput.toLowerCase() === "low") {
+                        priority = TaskPriority.Low;
+                    }
+                    else if (priorityInput.toLowerCase() === "high") {
+                        priority = TaskPriority.High;
+                    }
+                    else {
+                        priority = TaskPriority.Medium;
+                    }
+                    const dueDateInput = yield question("Enter due date (YYYY-MM-DD) or leave blank: ");
+                    let dueDate = undefined;
+                    if (dueDateInput.trim() !== "") {
+                        const parsedDate = new Date(dueDateInput);
+                        if (!isNaN(parsedDate.getTime())) {
+                            dueDate = parsedDate;
+                        }
+                        else {
+                            console.log("Invalid date format. Due date will be ignored.");
+                        }
+                    }
+                    const task = manager.addTask(title.trim(), description.trim(), priority, dueDate);
+                    console.log("Task added:", task);
+                    break;
+                }
+                case "2": {
+                    const idStr = yield question("Enter task ID to update: ");
+                    const id = parseInt(idStr);
+                    if (isNaN(id)) {
+                        console.log("Invalid task ID.");
+                        break;
+                    }
+                    const newTitle = yield question("Enter new title (leave blank to keep unchanged): ");
+                    const newDescription = yield question("Enter new description (leave blank to keep unchanged): ");
+                    const newPriorityInput = yield question("Enter new priority (Low, Medium, High) (leave blank to keep unchanged): ");
+                    const newDueDateInput = yield question("Enter new due date (YYYY-MM-DD) (leave blank to keep unchanged): ");
+                    const updates = {};
+                    if (newTitle.trim() !== "") {
+                        updates.title = newTitle.trim();
+                    }
+                    if (newDescription.trim() !== "") {
+                        updates.description = newDescription.trim();
+                    }
+                    if (newPriorityInput.trim() !== "") {
+                        const priorityVal = newPriorityInput.toLowerCase();
+                        if (priorityVal === "low") {
+                            updates.priority = TaskPriority.Low;
+                        }
+                        else if (priorityVal === "high") {
+                            updates.priority = TaskPriority.High;
+                        }
+                        else if (priorityVal === "medium") {
+                            updates.priority = TaskPriority.Medium;
+                        }
+                    }
+                    if (newDueDateInput.trim() !== "") {
+                        const parsedDate = new Date(newDueDateInput);
+                        if (!isNaN(parsedDate.getTime())) {
+                            updates.dueDate = parsedDate;
+                        }
+                        else {
+                            console.log("Invalid date format. Due date will be unchanged.");
+                        }
+                    }
+                    const updatedTask = manager.updateTask(id, updates);
+                    if (updatedTask) {
+                        console.log("Task updated:", updatedTask);
+                    }
+                    else {
+                        console.log("Task not found.");
+                    }
+                    break;
+                }
+                case "3": {
+                    const idStr = yield question("Enter task ID to remove: ");
+                    const id = parseInt(idStr);
+                    if (isNaN(id)) {
+                        console.log("Invalid task ID.");
+                        break;
+                    }
+                    const removed = manager.removeTask(id);
+                    if (removed) {
+                        console.log(`Task ${id} removed.`);
+                    }
+                    else {
+                        console.log("Task not found.");
+                    }
+                    break;
+                }
+                case "4": {
+                    const tasks = manager.listTasks();
+                    if (tasks.length === 0) {
+                        console.log("No tasks available.");
+                    }
+                    else {
+                        console.log("Current tasks:");
+                        tasks.forEach((task) => {
+                            console.log(`ID: ${task.id}, Title: ${task.title}, Description: ${task.description || "No description"}, Status: ${task.status}, Priority: ${task.priority}, Due: ${task.dueDate ? new Date(task.dueDate).toLocaleDateString() : "N/A"}`);
+                        });
+                    }
+                    break;
+                }
+                case "5":
+                    exit = true;
+                    break;
+                default:
+                    console.log("Invalid option. Please try again.");
+            }
+        }
+        rl.close();
+        console.log("Goodbye!");
+    });
+}
+main();
