@@ -1,54 +1,10 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const readline = __importStar(require("readline"));
 // ---------------------------
 // Decorator: Log Method Calls
 // ---------------------------
@@ -129,7 +85,7 @@ class TaskManager {
     }
     addTask(title, description, priority, dueDate) {
         const task = {
-            id: 0, // will be assigned by repository
+            id: 0,
             title,
             description,
             status: TaskStatus.Pending,
@@ -147,12 +103,6 @@ class TaskManager {
     listTasks() {
         return this.repository.getAll();
     }
-    listTasksByPriority(priority) {
-        return this.repository.getByPriority(priority);
-    }
-    listTasksDueBefore(date) {
-        return this.repository.getDueBefore(date);
-    }
 }
 __decorate([
     logExecution
@@ -166,205 +116,79 @@ __decorate([
 __decorate([
     logExecution
 ], TaskManager.prototype, "listTasks", null);
-__decorate([
-    logExecution
-], TaskManager.prototype, "listTasksByPriority", null);
-__decorate([
-    logExecution
-], TaskManager.prototype, "listTasksDueBefore", null);
 // ---------------------------
-// Interactive CLI using readline
+// DOM Interaction
 // ---------------------------
-const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-});
-function askQuestion(query) {
-    return new Promise((resolve) => rl.question(query, resolve));
-}
-// ---------------------------
-// Interactive Menu Function
-// ---------------------------
-function interactiveMenu(manager) {
-    return __awaiter(this, void 0, void 0, function* () {
-        while (true) {
-            console.log("\n--- Task Manager Menu ---");
-            console.log("1. Add Task");
-            console.log("2. Update Task");
-            console.log("3. Remove Task");
-            console.log("4. List Tasks");
-            console.log("5. Exit");
-            const choice = yield askQuestion("Select an option: ");
-            switch (choice.trim()) {
-                case "1": {
-                    const title = yield askQuestion("Enter task title: ");
-                    const description = yield askQuestion("Enter task description: ");
-                    const priorityStr = yield askQuestion("Enter task priority (Low, Medium, High): ");
-                    let priority;
-                    if (priorityStr.toLowerCase() === "low") {
-                        priority = TaskPriority.Low;
-                    }
-                    else if (priorityStr.toLowerCase() === "high") {
-                        priority = TaskPriority.High;
-                    }
-                    else {
-                        priority = TaskPriority.Medium;
-                    }
-                    const dueDateStr = yield askQuestion("Enter due date (YYYY-MM-DD) or leave blank: ");
-                    let dueDate = undefined;
-                    if (dueDateStr.trim() !== "") {
-                        dueDate = new Date(dueDateStr);
-                        if (isNaN(dueDate.getTime())) {
-                            console.log("Invalid date. Due date not set.");
-                            dueDate = undefined;
-                        }
-                    }
-                    const newTask = manager.addTask(title, description, priority, dueDate);
-                    console.log("Added Task:", newTask);
-                    break;
+document.addEventListener("DOMContentLoaded", () => {
+    const manager = new TaskManager();
+    const taskForm = document.getElementById("taskForm");
+    const tasksList = document.getElementById("tasksList");
+    // Renders the current tasks in the DOM using Bootstrap list groups
+    function renderTasks() {
+        tasksList.innerHTML = "";
+        const tasks = manager.listTasks();
+        tasks.forEach((task) => {
+            // Create list group item
+            const li = document.createElement("li");
+            li.classList.add("list-group-item", "d-flex", "justify-content-between", "align-items-start", "mb-2");
+            // Left side: Task info
+            const infoDiv = document.createElement("div");
+            infoDiv.innerHTML = `
+          <div class="fw-bold">${task.title}</div>
+          <small>${task.description || "No description"}</small><br />
+          <small>Status: ${task.status} | Priority: ${task.priority} | Due: ${task.dueDate ? new Date(task.dueDate).toLocaleDateString() : "N/A"}</small>
+        `;
+            // Right side: Action buttons
+            const btnGroup = document.createElement("div");
+            btnGroup.classList.add("btn-group");
+            // Update button (example: only updates the title)
+            const updateBtn = document.createElement("button");
+            updateBtn.classList.add("btn", "btn-warning", "btn-sm");
+            updateBtn.textContent = "Update";
+            updateBtn.addEventListener("click", () => {
+                const newTitle = prompt("Enter new title:", task.title);
+                if (newTitle !== null && newTitle.trim() !== "") {
+                    manager.updateTask(task.id, { title: newTitle });
+                    renderTasks();
                 }
-                case "2": {
-                    const updateIdStr = yield askQuestion("Enter task ID to update: ");
-                    const updateId = parseInt(updateIdStr);
-                    if (isNaN(updateId)) {
-                        console.log("Invalid task ID.");
-                        break;
-                    }
-                    console.log("What would you like to update?");
-                    console.log("1. Title");
-                    console.log("2. Description");
-                    console.log("3. Status");
-                    console.log("4. Priority");
-                    console.log("5. Due Date");
-                    const updateChoice = yield askQuestion("Select an option: ");
-                    let updates = {};
-                    switch (updateChoice.trim()) {
-                        case "1": {
-                            const newTitle = yield askQuestion("Enter new title: ");
-                            updates.title = newTitle;
-                            break;
-                        }
-                        case "2": {
-                            const newDesc = yield askQuestion("Enter new description: ");
-                            updates.description = newDesc;
-                            break;
-                        }
-                        case "3": {
-                            const newStatusStr = yield askQuestion("Enter new status (Pending, In Progress, Completed): ");
-                            let newStatus;
-                            if (newStatusStr.toLowerCase() === "pending") {
-                                newStatus = TaskStatus.Pending;
-                            }
-                            else if (newStatusStr.toLowerCase() === "in progress" ||
-                                newStatusStr.toLowerCase() === "inprogress") {
-                                newStatus = TaskStatus.InProgress;
-                            }
-                            else if (newStatusStr.toLowerCase() === "completed") {
-                                newStatus = TaskStatus.Completed;
-                            }
-                            else {
-                                console.log("Invalid status. Update aborted.");
-                                break;
-                            }
-                            updates.status = newStatus;
-                            break;
-                        }
-                        case "4": {
-                            const newPriorityStr = yield askQuestion("Enter new priority (Low, Medium, High): ");
-                            let newPriority;
-                            if (newPriorityStr.toLowerCase() === "low") {
-                                newPriority = TaskPriority.Low;
-                            }
-                            else if (newPriorityStr.toLowerCase() === "high") {
-                                newPriority = TaskPriority.High;
-                            }
-                            else if (newPriorityStr.toLowerCase() === "medium") {
-                                newPriority = TaskPriority.Medium;
-                            }
-                            else {
-                                console.log("Invalid priority. Update aborted.");
-                                break;
-                            }
-                            updates.priority = newPriority;
-                            break;
-                        }
-                        case "5": {
-                            const newDueDateStr = yield askQuestion("Enter new due date (YYYY-MM-DD) or leave blank to remove: ");
-                            if (newDueDateStr.trim() === "") {
-                                updates.dueDate = undefined;
-                            }
-                            else {
-                                const newDueDate = new Date(newDueDateStr);
-                                if (isNaN(newDueDate.getTime())) {
-                                    console.log("Invalid date. Update aborted.");
-                                    break;
-                                }
-                                else {
-                                    updates.dueDate = newDueDate;
-                                }
-                            }
-                            break;
-                        }
-                        default:
-                            console.log("Invalid update option.");
-                    }
-                    const updatedTask = manager.updateTask(updateId, updates);
-                    if (updatedTask) {
-                        console.log("Updated Task:", updatedTask);
-                    }
-                    else {
-                        console.log(`Task with ID ${updateId} not found.`);
-                    }
-                    break;
+            });
+            // Remove button
+            const removeBtn = document.createElement("button");
+            removeBtn.classList.add("btn", "btn-danger", "btn-sm");
+            removeBtn.textContent = "Remove";
+            removeBtn.addEventListener("click", () => {
+                if (confirm(`Are you sure you want to remove task ${task.id}?`)) {
+                    manager.removeTask(task.id);
+                    renderTasks();
                 }
-                case "3": {
-                    const removeIdStr = yield askQuestion("Enter task ID to remove: ");
-                    const removeId = parseInt(removeIdStr);
-                    if (isNaN(removeId)) {
-                        console.log("Invalid task ID.");
-                        break;
-                    }
-                    const removed = manager.removeTask(removeId);
-                    if (removed) {
-                        console.log(`Task with ID ${removeId} removed.`);
-                    }
-                    else {
-                        console.log(`Task with ID ${removeId} not found.`);
-                    }
-                    break;
-                }
-                case "4": {
-                    console.log("\n--- Current Tasks ---");
-                    const tasks = manager.listTasks();
-                    if (tasks.length === 0) {
-                        console.log("No tasks available.");
-                    }
-                    else {
-                        tasks.forEach((task) => {
-                            console.log(`ID: ${task.id} | Title: ${task.title} | Status: ${task.status} | Priority: ${task.priority} | Due: ${task.dueDate ? task.dueDate.toLocaleDateString() : "N/A"}`);
-                        });
-                    }
-                    break;
-                }
-                case "5": {
-                    console.log("Exiting Task Manager.");
-                    rl.close();
-                    return;
-                }
-                default:
-                    console.log("Invalid option. Please try again.");
-            }
+            });
+            btnGroup.appendChild(updateBtn);
+            btnGroup.appendChild(removeBtn);
+            // Combine everything
+            li.appendChild(infoDiv);
+            li.appendChild(btnGroup);
+            tasksList.appendChild(li);
+        });
+    }
+    // Handle form submission to add a new task
+    taskForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const titleInput = document.getElementById("title");
+        const descriptionInput = document.getElementById("description");
+        const prioritySelect = document.getElementById("priority");
+        const dueDateInput = document.getElementById("dueDate");
+        const title = titleInput.value.trim();
+        const description = descriptionInput.value.trim();
+        const priority = prioritySelect.value;
+        const dueDate = dueDateInput.value ? new Date(dueDateInput.value) : undefined;
+        if (!title) {
+            alert("Title is required.");
+            return;
         }
+        manager.addTask(title, description, priority, dueDate);
+        taskForm.reset();
+        renderTasks();
     });
-}
-// ---------------------------
-// Main Function
-// ---------------------------
-function main() {
-    return __awaiter(this, void 0, void 0, function* () {
-        const manager = new TaskManager();
-        console.log("Welcome to the Advanced Task Manager CLI!");
-        yield interactiveMenu(manager);
-    });
-}
-main().catch((err) => console.error("Error in main:", err));
+    // Initial render
+    renderTasks();
+});
